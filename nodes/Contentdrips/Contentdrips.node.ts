@@ -1,12 +1,12 @@
-import type {
+import {
 	IDataObject,
 	IExecuteFunctions,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
 	IHttpRequestMethods,
+	NodeConnectionType,
 } from 'n8n-workflow';
-import { NodeConnectionType } from 'n8n-workflow';
 
 export class Contentdrips implements INodeType {
 	description: INodeTypeDescription = {
@@ -123,7 +123,6 @@ export class Contentdrips implements INodeType {
 				],
 				default: 'getStatus',
 			},
-			// Template ID - Required for graphic and carousel creation
 			{
 				displayName: 'Template ID',
 				name: 'templateId',
@@ -138,7 +137,6 @@ export class Contentdrips implements INodeType {
 				default: '',
 				description: 'The ID of the Contentdrips template to use',
 			},
-			// Job ID - Required for job operations
 			{
 				displayName: 'Job ID',
 				name: 'jobId',
@@ -152,7 +150,6 @@ export class Contentdrips implements INodeType {
 				default: '',
 				description: 'The ID of the job to check',
 			},
-			// Output format
 			{
 				displayName: 'Output Format',
 				name: 'output',
@@ -180,7 +177,6 @@ export class Contentdrips implements INodeType {
 				default: 'png',
 				description: 'The output format for the generated content',
 			},
-			// Branding section
 			{
 				displayName: 'Add Branding',
 				name: 'addBranding',
@@ -245,7 +241,6 @@ export class Contentdrips implements INodeType {
 					},
 				],
 			},
-			// Content Updates
 			{
 				displayName: 'Content Updates',
 				name: 'contentUpdates',
@@ -300,7 +295,6 @@ export class Contentdrips implements INodeType {
 					},
 				],
 			},
-			// Carousel Input Method Selection
 			{
 				displayName: 'Carousel Data Input',
 				name: 'carouselInputMethod',
@@ -326,7 +320,6 @@ export class Contentdrips implements INodeType {
 				default: 'ui',
 				description: 'Choose how to provide carousel slide data',
 			},
-			// UI Method - Individual Fields
 			{
 				displayName: 'Enable Intro Slide',
 				name: 'enableIntroSlide',
@@ -476,7 +469,6 @@ export class Contentdrips implements INodeType {
 					},
 				],
 			},
-			// JSON Method - Single Field
 			{
 				displayName: 'Carousel JSON',
 				name: 'carouselJson',
@@ -503,10 +495,6 @@ export class Contentdrips implements INodeType {
 				const resource = this.getNodeParameter('resource', i) as string;
 				const operation = this.getNodeParameter('operation', i) as string;
 
-				if (!resource || !operation) {
-					throw new Error('Resource and operation parameters are required');
-				}
-
 				let responseData: any;
 
 				if (resource === 'graphic' && operation === 'create') {
@@ -518,11 +506,7 @@ export class Contentdrips implements INodeType {
 						responseData = await this.getJobStatus(i);
 					} else if (operation === 'getResult') {
 						responseData = await this.getJobResult(i);
-					} else {
-						throw new Error(`Unknown job operation: ${operation}`);
 					}
-				} else {
-					throw new Error(`Unknown resource "${resource}" or operation "${operation}"`);
 				}
 
 				returnData.push({
@@ -531,13 +515,11 @@ export class Contentdrips implements INodeType {
 						item: i,
 					},
 				});
-			} catch (error) {
-				const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-
+			} catch (error: any) {
 				if (this.continueOnFail()) {
 					returnData.push({
 						json: {
-							error: errorMessage,
+							error: error.message || 'Unknown error occurred',
 							resource: this.getNodeParameter('resource', i, 'unknown'),
 							operation: this.getNodeParameter('operation', i, 'unknown'),
 						},
@@ -547,23 +529,19 @@ export class Contentdrips implements INodeType {
 					});
 					continue;
 				}
-				throw new Error(`Contentdrips API error: ${errorMessage}`);
+				throw error;
 			}
 		}
 
 		return [returnData];
 	}
 
-	private async createGraphic(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
+	private async createGraphic(this: IExecuteFunctions, itemIndex: number) {
 		const templateId = this.getNodeParameter('templateId', itemIndex) as string;
 		const output = this.getNodeParameter('output', itemIndex) as string;
 		const addBranding = this.getNodeParameter('addBranding', itemIndex) as boolean;
 
-		if (!templateId) {
-			throw new Error('Template ID is required for graphic creation');
-		}
-
-		const body: IDataObject = {
+		const body: any = {
 			template_id: templateId,
 			output,
 		};
@@ -580,39 +558,26 @@ export class Contentdrips implements INodeType {
 			body.content_update = contentUpdates.updates;
 		}
 
-		try {
-			const response = await this.helpers.httpRequestWithAuthentication.call(
-				this,
-				'contentdripsApi',
-				{
-					method: 'POST' as IHttpRequestMethods,
-					url: '/render',
-					body,
-				},
-			);
+		const response = await this.helpers.httpRequestWithAuthentication.call(
+			this,
+			'contentdripsApi',
+			{
+				method: 'POST' as IHttpRequestMethods,
+				url: '/render',
+				body,
+			},
+		);
 
-			return response;
-		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : 'Unknown API error';
-			throw new Error(`Failed to create graphic with template ${templateId}: ${errorMessage}`);
-		}
+		return response;
 	}
 
-	private async createCarousel(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
+	private async createCarousel(this: IExecuteFunctions, itemIndex: number) {
 		const templateId = this.getNodeParameter('templateId', itemIndex) as string;
 		const output = this.getNodeParameter('output', itemIndex) as string;
 		const addBranding = this.getNodeParameter('addBranding', itemIndex) as boolean;
 		const carouselInputMethod = this.getNodeParameter('carouselInputMethod', itemIndex) as string;
 
-		if (!templateId) {
-			throw new Error('Template ID is required for carousel creation');
-		}
-
-		if (!carouselInputMethod) {
-			throw new Error('Carousel input method must be specified');
-		}
-
-		const body: IDataObject = {
+		const body: any = {
 			template_id: templateId,
 			output,
 		};
@@ -629,28 +594,15 @@ export class Contentdrips implements INodeType {
 			body.content_update = contentUpdates.updates;
 		}
 
-		let carousel: IDataObject = {};
+		let carousel: any = {};
 
 		if (carouselInputMethod === 'json') {
-			try {
-				const carouselJsonParam = this.getNodeParameter('carouselJson', itemIndex);
-				
-				if (typeof carouselJsonParam === 'string') {
-					carousel = JSON.parse(carouselJsonParam);
-				} else if (typeof carouselJsonParam === 'object' && carouselJsonParam !== null) {
-					carousel = carouselJsonParam as IDataObject;
-				} else {
-					throw new Error('Carousel JSON must be a valid JSON object or string');
-				}
-
-				if (typeof carousel !== 'object' || carousel === null) {
-					throw new Error('Carousel JSON must be a valid object with intro_slide, slides, and/or ending_slide properties');
-				}
-			} catch (error) {
-				if (error instanceof Error) {
-					throw error;
-				}
-				throw new Error(`Invalid JSON in carousel parameter: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			const carouselJsonParam = this.getNodeParameter('carouselJson', itemIndex);
+			
+			if (typeof carouselJsonParam === 'string') {
+				carousel = JSON.parse(carouselJsonParam);
+			} else {
+				carousel = carouselJsonParam;
 			}
 		} else {
 			const enableIntroSlide = this.getNodeParameter('enableIntroSlide', itemIndex) as boolean;
@@ -663,12 +615,7 @@ export class Contentdrips implements INodeType {
 
 			const slides = this.getNodeParameter('slides', itemIndex) as IDataObject;
 			if (slides.slide && Array.isArray(slides.slide)) {
-				if (slides.slide.length === 0) {
-					throw new Error('At least one content slide is required for carousel creation');
-				}
 				carousel.slides = slides.slide;
-			} else {
-				throw new Error('At least one content slide is required for carousel creation');
 			}
 
 			const enableEndingSlide = this.getNodeParameter('enableEndingSlide', itemIndex) as boolean;
@@ -680,75 +627,50 @@ export class Contentdrips implements INodeType {
 			}
 		}
 
-		if (Object.keys(carousel).length === 0) {
-			throw new Error('Carousel must have at least intro_slide, slides, or ending_slide data');
+		if (Object.keys(carousel).length > 0) {
+			body.carousel = carousel;
 		}
 
-		body.carousel = carousel;
+		const response = await this.helpers.httpRequestWithAuthentication.call(
+			this,
+			'contentdripsApi',
+			{
+				method: 'POST' as IHttpRequestMethods,
+				url: '/render?tool=carousel-maker',
+				body,
+			},
+		);
 
-		try {
-			const response = await this.helpers.httpRequestWithAuthentication.call(
-				this,
-				'contentdripsApi',
-				{
-					method: 'POST' as IHttpRequestMethods,
-					url: '/render?tool=carousel-maker',
-					body,
-				},
-			);
-
-			return response;
-		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : 'Unknown API error';
-			throw new Error(`Failed to create carousel with template ${templateId}: ${errorMessage}`);
-		}
+		return response;
 	}
 
-	private async getJobStatus(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
+	private async getJobStatus(this: IExecuteFunctions, itemIndex: number) {
 		const jobId = this.getNodeParameter('jobId', itemIndex) as string;
 
-		if (!jobId || jobId.trim() === '') {
-			throw new Error('Job ID is required for checking job status');
-		}
+		const response = await this.helpers.httpRequestWithAuthentication.call(
+			this,
+			'contentdripsApi',
+			{
+				method: 'GET' as IHttpRequestMethods,
+				url: `/job/${jobId}/status`,
+			},
+		);
 
-		try {
-			const response = await this.helpers.httpRequestWithAuthentication.call(
-				this,
-				'contentdripsApi',
-				{
-					method: 'GET' as IHttpRequestMethods,
-					url: `/job/${jobId}/status`,
-				},
-			);
-
-			return response;
-		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : 'Unknown API error';
-			throw new Error(`Failed to get status for job ${jobId}: ${errorMessage}`);
-		}
+		return response;
 	}
 
-	private async getJobResult(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
+	private async getJobResult(this: IExecuteFunctions, itemIndex: number) {
 		const jobId = this.getNodeParameter('jobId', itemIndex) as string;
 
-		if (!jobId || jobId.trim() === '') {
-			throw new Error('Job ID is required for getting job result');
-		}
+		const response = await this.helpers.httpRequestWithAuthentication.call(
+			this,
+			'contentdripsApi',
+			{
+				method: 'GET' as IHttpRequestMethods,
+				url: `/job/${jobId}/result`,
+			},
+		);
 
-		try {
-			const response = await this.helpers.httpRequestWithAuthentication.call(
-				this,
-				'contentdripsApi',
-				{
-					method: 'GET' as IHttpRequestMethods,
-					url: `/job/${jobId}/result`,
-				},
-			);
-
-			return response;
-		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : 'Unknown API error';
-			throw new Error(`Failed to get result for job ${jobId}: ${errorMessage}`);
-		}
+		return response;
 	}
 }
