@@ -6,6 +6,7 @@ import type {
 	INodeTypeDescription,
 } from 'n8n-workflow';
 
+import { NodeConnectionType } from 'n8n-workflow';
 import { contentdripsApiRequest, buildCarouselData, validateRequiredFields, cleanEmptyFields } from './GenericFunctions';
 
 export class Contentdrips implements INodeType {
@@ -20,8 +21,8 @@ export class Contentdrips implements INodeType {
 		defaults: {
 			name: 'Contentdrips',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionType.Main],
+		outputs: [NodeConnectionType.Main],
 		credentials: [
 			{
 				name: 'contentdripsApi',
@@ -506,14 +507,14 @@ export class Contentdrips implements INodeType {
 				let responseData: any;
 
 				if (resource === 'graphic' && operation === 'create') {
-					responseData = await this.createGraphic(i);
+					responseData = await createGraphic.call(this, i);
 				} else if (resource === 'carousel' && operation === 'create') {
-					responseData = await this.createCarousel(i);
+					responseData = await createCarousel.call(this, i);
 				} else if (resource === 'job') {
 					if (operation === 'getStatus') {
-						responseData = await this.getJobStatus(i);
+						responseData = await getJobStatus.call(this, i);
 					} else if (operation === 'getResult') {
-						responseData = await this.getJobResult(i);
+						responseData = await getJobResult.call(this, i);
 					}
 				}
 
@@ -527,7 +528,7 @@ export class Contentdrips implements INodeType {
 				if (this.continueOnFail()) {
 					returnData.push({
 						json: {
-							error: error.message,
+							error: error instanceof Error ? error.message : 'Unknown error occurred',
 						},
 						pairedItem: {
 							item: i,
@@ -541,92 +542,93 @@ export class Contentdrips implements INodeType {
 
 		return [returnData];
 	}
+}
 
-	private async createGraphic(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
-		const templateId = this.getNodeParameter('templateId', itemIndex) as string;
-		const output = this.getNodeParameter('output', itemIndex) as string;
-		const addBranding = this.getNodeParameter('addBranding', itemIndex) as boolean;
+async function createGraphic(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
+	const templateId = this.getNodeParameter('templateId', itemIndex) as string;
+	const output = this.getNodeParameter('output', itemIndex) as string;
+	const addBranding = this.getNodeParameter('addBranding', itemIndex) as boolean;
 
-		let body: IDataObject = {
-			template_id: templateId,
-			output,
-		};
+	let body: IDataObject = {
+		template_id: templateId,
+		output,
+	};
 
-		// Add branding if specified
-		if (addBranding) {
-			const branding = this.getNodeParameter('branding', itemIndex) as IDataObject;
-			if (Object.keys(branding).length > 0) {
-				body.branding = cleanEmptyFields(branding);
-			}
+	// Add branding if specified
+	if (addBranding) {
+		const branding = this.getNodeParameter('branding', itemIndex) as IDataObject;
+		if (Object.keys(branding).length > 0) {
+			body.branding = cleanEmptyFields(branding);
 		}
-
-		// Add content updates if specified
-		const contentUpdates = this.getNodeParameter('contentUpdates', itemIndex) as IDataObject;
-		if (contentUpdates.updates && Array.isArray(contentUpdates.updates)) {
-			body.content_update = contentUpdates.updates;
-		}
-
-		// Clean and validate
-		body = cleanEmptyFields(body);
-		validateRequiredFields(body);
-
-		return contentdripsApiRequest.call(this, 'POST', '/render', body);
 	}
 
-	private async createCarousel(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
-		const templateId = this.getNodeParameter('templateId', itemIndex) as string;
-		const output = this.getNodeParameter('output', itemIndex) as string;
-		const addBranding = this.getNodeParameter('addBranding', itemIndex) as boolean;
-		const carouselInputMethod = this.getNodeParameter('carouselInputMethod', itemIndex) as string;
-
-		let body: IDataObject = {
-			template_id: templateId,
-			output,
-		};
-
-		// Add branding if specified
-		if (addBranding) {
-			const branding = this.getNodeParameter('branding', itemIndex) as IDataObject;
-			if (Object.keys(branding).length > 0) {
-				body.branding = cleanEmptyFields(branding);
-			}
-		}
-
-		// Add content updates if specified
-		const contentUpdates = this.getNodeParameter('contentUpdates', itemIndex) as IDataObject;
-		if (contentUpdates.updates && Array.isArray(contentUpdates.updates)) {
-			body.content_update = contentUpdates.updates;
-		}
-
-		// Handle carousel data
-		const carousel = buildCarouselData(
-			carouselInputMethod,
-			this.getNodeParameter('enableIntroSlide', itemIndex, false) as boolean,
-			this.getNodeParameter('introSlide', itemIndex, {}) as IDataObject,
-			this.getNodeParameter('slides', itemIndex, {}) as IDataObject,
-			this.getNodeParameter('enableEndingSlide', itemIndex, false) as boolean,
-			this.getNodeParameter('endingSlide', itemIndex, {}) as IDataObject,
-			this.getNodeParameter('carouselJson', itemIndex, {}) as IDataObject,
-		);
-
-		if (Object.keys(carousel).length > 0) {
-			body.carousel = carousel;
-		}
-
-		// Clean and validate
-		body = cleanEmptyFields(body);
-		validateRequiredFields(body);
-
-		return contentdripsApiRequest.call(this, 'POST', '/render?tool=carousel-maker', body);
+	// Add content updates if specified
+	const contentUpdates = this.getNodeParameter('contentUpdates', itemIndex) as IDataObject;
+	if (contentUpdates.updates && Array.isArray(contentUpdates.updates)) {
+		body.content_update = contentUpdates.updates;
 	}
 
-	private async getJobStatus(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
-		const jobId = this.getNodeParameter('jobId', itemIndex) as string;
-		return contentdripsApiRequest.call(this, 'GET', `/job/${jobId}/status`);
+	// Clean and validate
+	body = cleanEmptyFields(body);
+	validateRequiredFields(body);
+
+	return contentdripsApiRequest.call(this, 'POST', '/render', body);
+}
+
+async function createCarousel(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
+	const templateId = this.getNodeParameter('templateId', itemIndex) as string;
+	const output = this.getNodeParameter('output', itemIndex) as string;
+	const addBranding = this.getNodeParameter('addBranding', itemIndex) as boolean;
+	const carouselInputMethod = this.getNodeParameter('carouselInputMethod', itemIndex) as string;
+
+	let body: IDataObject = {
+		template_id: templateId,
+		output,
+	};
+
+	// Add branding if specified
+	if (addBranding) {
+		const branding = this.getNodeParameter('branding', itemIndex) as IDataObject;
+		if (Object.keys(branding).length > 0) {
+			body.branding = cleanEmptyFields(branding);
+		}
 	}
 
-	private async getJobResult(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
-		const jobId = this.getNodeParameter('jobId', itemIndex) as string;
-		return contentdripsApiRequest.call(this, 'GET', `/job/${jobId}/result`);
+	// Add content updates if specified
+	const contentUpdates = this.getNodeParameter('contentUpdates', itemIndex) as IDataObject;
+	if (contentUpdates.updates && Array.isArray(contentUpdates.updates)) {
+		body.content_update = contentUpdates.updates;
 	}
+
+	// Handle carousel data
+	const carousel = buildCarouselData(
+		carouselInputMethod,
+		this.getNodeParameter('enableIntroSlide', itemIndex, false) as boolean,
+		this.getNodeParameter('introSlide', itemIndex, {}) as IDataObject,
+		this.getNodeParameter('slides', itemIndex, {}) as IDataObject,
+		this.getNodeParameter('enableEndingSlide', itemIndex, false) as boolean,
+		this.getNodeParameter('endingSlide', itemIndex, {}) as IDataObject,
+		this.getNodeParameter('carouselJson', itemIndex, {}) as IDataObject,
+	);
+
+	if (Object.keys(carousel).length > 0) {
+		body.carousel = carousel;
+	}
+
+	// Clean and validate
+	body = cleanEmptyFields(body);
+	validateRequiredFields(body);
+
+	return contentdripsApiRequest.call(this, 'POST', '/render?tool=carousel-maker', body);
+}
+
+async function getJobStatus(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
+	const jobId = this.getNodeParameter('jobId', itemIndex) as string;
+	return contentdripsApiRequest.call(this, 'GET', `/job/${jobId}/status`);
+}
+
+async function getJobResult(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
+	const jobId = this.getNodeParameter('jobId', itemIndex) as string;
+	return contentdripsApiRequest.call(this, 'GET', `/job/${jobId}/result`);
+}
 }
