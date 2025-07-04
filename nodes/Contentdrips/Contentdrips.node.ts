@@ -544,7 +544,6 @@ export class Contentdrips implements INodeType {
 	}
 }
 
-// Functions outside the class
 async function createGraphic(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
 	const templateId = this.getNodeParameter('templateId', itemIndex) as string;
 	const output = this.getNodeParameter('output', itemIndex) as string;
@@ -631,5 +630,4 @@ async function getJobStatus(this: IExecuteFunctions, itemIndex: number): Promise
 async function getJobResult(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
 	const jobId = this.getNodeParameter('jobId', itemIndex) as string;
 	return contentdripsApiRequest.call(this, 'GET', `/job/${jobId}/result`);
-}
 }
