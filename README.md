@@ -69,6 +69,10 @@ Before using this node, you need to:
    - Select "Add Label" and give it a name (e.g., `title_1`, `hashtag_1`)
    - Use these labels in your n8n workflow to update content
 
+### Supported Output Formats
+- **PNG**: High-quality raster images 
+- **PDF**: Perfect for print and professional documents
+
 ### Basic Usage
 
 #### Creating a Static Graphic
@@ -96,43 +100,58 @@ Before using this node, you need to:
 }
 ```
 
-#### Creating a Carousel - Clean & Simple
+#### Creating a Carousel - Flexible Structure
 
-The carousel structure is much cleaner now:
+**Intro Slide** (Optional):
+- Enable/disable toggle
+- When enabled: heading, description, and image fields automatically appear
 
-**Intro Slide** (Always available):
+**Content Slides** (Main content):
+- **Method 1 - Build in UI**: Manually add slides using the interface
+- **Method 2 - JSON Expression**: Use dynamic data with expressions like `{{ $json.slides }}`
+
+**Ending Slide** (Optional):
+- Enable/disable toggle  
+- When enabled: heading, description, and image fields automatically appear
+
+**Example - UI Method:**
 ```json
 {
-  "heading": "Start Here",
-  "description": "Tips that actually work", 
-  "image": "https://example.com/intro.jpg"
-}
-```
-
-**Content Slides** - Choose one approach:
-
-*Option 1: Fixed UI Fields (for manual entry)*
-```json
-{
-  "slides": {
+  "resource": "carousel",
+  "operation": "create", 
+  "templateId": "126130",
+  "output": "png",
+  "enableIntroSlide": true,
+  "introSlideHeading": "Welcome!",
+  "introSlideDescription": "Let's get started",
+  "contentSlidesInputMethod": "ui",
+  "contentSlides": {
     "slide": [
       {
-        "heading": "Post daily",
-        "description": "It builds habit and reach."
+        "heading": "Step 1",
+        "description": "First step details"
       },
       {
-        "heading": "Be helpful", 
-        "description": "Always give value."
+        "heading": "Step 2", 
+        "description": "Second step details"
       }
     ]
-  }
+  },
+  "enableEndingSlide": true,
+  "endingSlideHeading": "Thank you!",
+  "endingSlideDescription": "Follow for more tips"
 }
 ```
 
-*Option 2: JSON Expression (for dynamic content)*
+**Example - JSON Method for Content Slides:**
 ```json
 {
-  "slidesJson": "{{ $json.dynamicSlides }}"
+  "resource": "carousel",
+  "operation": "create", 
+  "templateId": "126130",
+  "output": "pdf",
+  "contentSlidesInputMethod": "json",
+  "contentSlidesJson": "{{ $json.dynamicSlides }}"
 }
 ```
 
@@ -141,29 +160,14 @@ Where `$json.dynamicSlides` contains:
 [
   {
     "heading": "Dynamic Tip 1",
-    "description": "From previous node"
+    "description": "Generated from data"
   },
   {
     "heading": "Dynamic Tip 2", 
-    "description": "Also from previous node"
+    "description": "Another generated tip"
   }
 ]
 ```
-
-**Ending Slide** (Always available):
-```json
-{
-  "heading": "Follow for more",
-  "description": "New tips every week.",
-  "image": "https://example.com/end.jpg"
-}
-```
-
-**Key Benefits:**
-- **Simpler UX**: No complex toggles
-- **Always accessible**: Intro/ending fields always visible
-- **Flexible content**: Fixed UI or JSON expressions for content slides
-- **Standard n8n pattern**: Familiar to n8n users
 
 ### Branding
 
@@ -284,13 +288,6 @@ Number of slides depends on RSS feed items - could be 3 today, 10 tomorrow.
 - [n8n Community Nodes](https://docs.n8n.io/integrations/community-nodes/)
 
 ## Version History
-
-### 1.1.0
-- **Improved carousel UX**: Removed complex toggles, always show intro/ending fields
-- **Content slides**: Fixed UI fields OR JSON expression (standard n8n pattern)
-- **Output format**: Fixed to PNG/PDF only (per API documentation)
-- **Icon support**: SVG properly included in build process
-- **Simplified logic**: Cleaner, more intuitive user interface
 
 ### 1.0.0
 - Initial release
