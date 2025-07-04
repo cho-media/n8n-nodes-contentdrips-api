@@ -1,0 +1,23 @@
+{
+  "node": "n8n-nodes-contentdrips.Contentdrips",
+  "nodeVersion": "1.0.0",
+  "codex": {
+    "categories": ["Communication", "Marketing & Content"],
+    "subcategories": {
+      "Communication": ["Social Networks"],
+      "Marketing & Content": ["Content Creation"]
+    },
+    "resources": {
+      "primaryDocumentation": [
+        {
+          "url": "https://app.contentdrips.com/api-management"
+        }
+      ],
+      "credentialDocumentation": [
+        {
+          "url": "https://app.contentdrips.com/api-management"
+        }
+      ]
+    }
+  }
+}
