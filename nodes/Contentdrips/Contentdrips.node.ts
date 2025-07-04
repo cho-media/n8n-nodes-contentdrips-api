@@ -7,7 +7,7 @@ import type {
 } from 'n8n-workflow';
 
 import { NodeConnectionType } from 'n8n-workflow';
-import { contentdripsApiRequest, buildCarouselData, validateRequiredFields, cleanEmptyFields } from './GenericFunctions';
+import { contentdripsApiRequest, validateRequiredFields, cleanEmptyFields } from './GenericFunctions';
 
 export class Contentdrips implements INodeType {
 	description: INodeTypeDescription = {
@@ -173,10 +173,6 @@ export class Contentdrips implements INodeType {
 						name: 'PDF',
 						value: 'pdf',
 					},
-					{
-						name: 'JPG',
-						value: 'jpg',
-					},
 				],
 				default: 'png',
 				description: 'The output format for the generated content',
@@ -301,47 +297,7 @@ export class Contentdrips implements INodeType {
 					},
 				],
 			},
-			// Carousel Input Method Selection
-			{
-				displayName: 'Carousel Data Input',
-				name: 'carouselInputMethod',
-				type: 'options',
-				displayOptions: {
-					show: {
-						resource: ['carousel'],
-						operation: ['create'],
-					},
-				},
-				options: [
-					{
-						name: 'Define in UI',
-						value: 'ui',
-						description: 'Use the UI to manually define slides',
-					},
-					{
-						name: 'Use JSON Expression',
-						value: 'json',
-						description: 'Provide carousel data as JSON (for dynamic content)',
-					},
-				],
-				default: 'ui',
-				description: 'Choose how to provide carousel slide data',
-			},
-			// UI Method - Individual Fields
-			{
-				displayName: 'Enable Intro Slide',
-				name: 'enableIntroSlide',
-				type: 'boolean',
-				displayOptions: {
-					show: {
-						resource: ['carousel'],
-						operation: ['create'],
-						carouselInputMethod: ['ui'],
-					},
-				},
-				default: false,
-				description: 'Whether to include an intro slide',
-			},
+			// Carousel-specific fields - Intro Slide (always available)
 			{
 				displayName: 'Intro Slide',
 				name: 'introSlide',
@@ -350,11 +306,10 @@ export class Contentdrips implements INodeType {
 					show: {
 						resource: ['carousel'],
 						operation: ['create'],
-						carouselInputMethod: ['ui'],
-						enableIntroSlide: [true],
 					},
 				},
 				default: {},
+				placeholder: 'Add Intro Slide Fields',
 				options: [
 					{
 						displayName: 'Heading',
@@ -379,6 +334,7 @@ export class Contentdrips implements INodeType {
 					},
 				],
 			},
+			// Content Slides with Fixed vs Expression option
 			{
 				displayName: 'Content Slides',
 				name: 'slides',
@@ -390,10 +346,9 @@ export class Contentdrips implements INodeType {
 					show: {
 						resource: ['carousel'],
 						operation: ['create'],
-						carouselInputMethod: ['ui'],
 					},
 				},
-				description: 'The content slides for the carousel. Add as many slides as needed.',
+				description: 'The content slides for the carousel',
 				default: {},
 				placeholder: 'Add Slide',
 				options: [
@@ -426,20 +381,21 @@ export class Contentdrips implements INodeType {
 					},
 				],
 			},
+			// Alternative: JSON Expression for Content Slides
 			{
-				displayName: 'Enable Ending Slide',
-				name: 'enableEndingSlide',
-				type: 'boolean',
+				displayName: 'Content Slides (JSON)',
+				name: 'slidesJson',
+				type: 'json',
 				displayOptions: {
 					show: {
 						resource: ['carousel'],
 						operation: ['create'],
-						carouselInputMethod: ['ui'],
 					},
 				},
-				default: false,
-				description: 'Whether to include an ending slide',
+				default: '[\n  {\n    "heading": "Tip 1",\n    "description": "First tip",\n    "image": "https://example.com/1.jpg"\n  },\n  {\n    "heading": "Tip 2",\n    "description": "Second tip",\n    "image": "https://example.com/2.jpg"\n  }\n]',
+				description: 'Content slides as JSON array. Use this for dynamic content from expressions like {{ $json.slides }}. All fields (heading, description, image) are optional. If both fixed slides and JSON are provided, JSON takes precedence.',
 			},
+			// Ending Slide (always available)
 			{
 				displayName: 'Ending Slide',
 				name: 'endingSlide',
@@ -448,11 +404,10 @@ export class Contentdrips implements INodeType {
 					show: {
 						resource: ['carousel'],
 						operation: ['create'],
-						carouselInputMethod: ['ui'],
-						enableEndingSlide: [true],
 					},
 				},
 				default: {},
+				placeholder: 'Add Ending Slide Fields',
 				options: [
 					{
 						displayName: 'Heading',
@@ -476,21 +431,6 @@ export class Contentdrips implements INodeType {
 						description: 'Image URL for the ending slide (optional)',
 					},
 				],
-			},
-			// JSON Method - Single Field
-			{
-				displayName: 'Carousel JSON',
-				name: 'carouselJson',
-				type: 'json',
-				displayOptions: {
-					show: {
-						resource: ['carousel'],
-						operation: ['create'],
-						carouselInputMethod: ['json'],
-					},
-				},
-				default: '{\n  "intro_slide": {\n    "heading": "Start Here",\n    "description": "Tips that work",\n    "image": "https://example.com/intro.jpg"\n  },\n  "slides": [\n    {\n      "heading": "Tip 1",\n      "description": "First tip",\n      "image": "https://example.com/1.jpg"\n    },\n    {\n      "heading": "Tip 2", \n      "description": "Second tip",\n      "image": "https://example.com/2.jpg"\n    }\n  ],\n  "ending_slide": {\n    "heading": "Follow for more",\n    "description": "New tips weekly",\n    "image": "https://example.com/end.jpg"\n  }\n}',
-				description: 'Complete carousel data as JSON. Use expressions like {{ $json.slides }} for dynamic data. All fields (heading, description, image) are optional.',
 			},
 		],
 	};
@@ -579,7 +519,6 @@ async function createCarousel(this: IExecuteFunctions, itemIndex: number): Promi
 	const templateId = this.getNodeParameter('templateId', itemIndex) as string;
 	const output = this.getNodeParameter('output', itemIndex) as string;
 	const addBranding = this.getNodeParameter('addBranding', itemIndex) as boolean;
-	const carouselInputMethod = this.getNodeParameter('carouselInputMethod', itemIndex) as string;
 
 	let body: IDataObject = {
 		template_id: templateId,
@@ -600,16 +539,39 @@ async function createCarousel(this: IExecuteFunctions, itemIndex: number): Promi
 		body.content_update = contentUpdates.updates;
 	}
 
-	// Handle carousel data
-	const carousel = buildCarouselData(
-		carouselInputMethod,
-		this.getNodeParameter('enableIntroSlide', itemIndex, false) as boolean,
-		this.getNodeParameter('introSlide', itemIndex, {}) as IDataObject,
-		this.getNodeParameter('slides', itemIndex, {}) as IDataObject,
-		this.getNodeParameter('enableEndingSlide', itemIndex, false) as boolean,
-		this.getNodeParameter('endingSlide', itemIndex, {}) as IDataObject,
-		this.getNodeParameter('carouselJson', itemIndex, {}) as IDataObject,
-	);
+	// Build carousel data with new simplified approach
+	const carousel: IDataObject = {};
+
+	// Always check for intro slide (no toggle needed)
+	const introSlide = this.getNodeParameter('introSlide', itemIndex, {}) as IDataObject;
+	if (Object.keys(introSlide).length > 0) {
+		carousel.intro_slide = cleanEmptyFields(introSlide);
+	}
+
+	// Content slides: Check JSON first, then UI fields
+	const slidesJson = this.getNodeParameter('slidesJson', itemIndex, '') as string;
+	if (slidesJson.trim()) {
+		try {
+			const parsedSlides = JSON.parse(slidesJson);
+			if (Array.isArray(parsedSlides) && parsedSlides.length > 0) {
+				carousel.slides = parsedSlides;
+			}
+		} catch (error) {
+			throw new Error('Invalid JSON in Content Slides (JSON): ' + (error instanceof Error ? error.message : 'Unknown error'));
+		}
+	} else {
+		// Use UI fields if no JSON provided
+		const slides = this.getNodeParameter('slides', itemIndex, {}) as IDataObject;
+		if (slides.slide && Array.isArray(slides.slide) && slides.slide.length > 0) {
+			carousel.slides = slides.slide;
+		}
+	}
+
+	// Always check for ending slide (no toggle needed)
+	const endingSlide = this.getNodeParameter('endingSlide', itemIndex, {}) as IDataObject;
+	if (Object.keys(endingSlide).length > 0) {
+		carousel.ending_slide = cleanEmptyFields(endingSlide);
+	}
 
 	if (Object.keys(carousel).length > 0) {
 		body.carousel = carousel;
