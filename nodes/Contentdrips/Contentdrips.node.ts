@@ -1,12 +1,12 @@
-import {
+import type {
 	IDataObject,
 	IExecuteFunctions,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
-	IHttpRequestMethods,
-	NodeConnectionType,
 } from 'n8n-workflow';
+
+import { contentdripsApiRequest, buildCarouselData, validateRequiredFields, cleanEmptyFields } from './GenericFunctions';
 
 export class Contentdrips implements INodeType {
 	description: INodeTypeDescription = {
@@ -20,8 +20,8 @@ export class Contentdrips implements INodeType {
 		defaults: {
 			name: 'Contentdrips',
 		},
-		inputs: [NodeConnectionType.Main],
-		outputs: [NodeConnectionType.Main],
+		inputs: ['main'],
+		outputs: ['main'],
 		credentials: [
 			{
 				name: 'contentdripsApi',
@@ -123,6 +123,7 @@ export class Contentdrips implements INodeType {
 				],
 				default: 'getStatus',
 			},
+			// Template ID - Required for graphic and carousel creation
 			{
 				displayName: 'Template ID',
 				name: 'templateId',
@@ -137,6 +138,7 @@ export class Contentdrips implements INodeType {
 				default: '',
 				description: 'The ID of the Contentdrips template to use',
 			},
+			// Job ID - Required for job operations
 			{
 				displayName: 'Job ID',
 				name: 'jobId',
@@ -150,6 +152,7 @@ export class Contentdrips implements INodeType {
 				default: '',
 				description: 'The ID of the job to check',
 			},
+			// Output format
 			{
 				displayName: 'Output Format',
 				name: 'output',
@@ -177,6 +180,7 @@ export class Contentdrips implements INodeType {
 				default: 'png',
 				description: 'The output format for the generated content',
 			},
+			// Branding section
 			{
 				displayName: 'Add Branding',
 				name: 'addBranding',
@@ -209,38 +213,39 @@ export class Contentdrips implements INodeType {
 						name: 'name',
 						type: 'string',
 						default: '',
-						description: 'Your name or brand name',
+						description: 'Your name or brand name (optional)',
 					},
 					{
 						displayName: 'Handle',
 						name: 'handle',
 						type: 'string',
 						default: '',
-						description: 'Your social media handle (e.g., @username)',
+						description: 'Your social media handle (optional), e.g., @username',
 					},
 					{
 						displayName: 'Bio',
 						name: 'bio',
 						type: 'string',
 						default: '',
-						description: 'Short bio or description',
+						description: 'Short bio or description (optional)',
 					},
 					{
 						displayName: 'Website URL',
 						name: 'website_url',
 						type: 'string',
 						default: '',
-						description: 'Your website URL',
+						description: 'Your website URL (optional)',
 					},
 					{
 						displayName: 'Avatar Image URL',
 						name: 'avatar_image_url',
 						type: 'string',
 						default: '',
-						description: 'URL to your avatar image',
+						description: 'URL to your avatar image (optional)',
 					},
 				],
 			},
+			// Content Updates
 			{
 				displayName: 'Content Updates',
 				name: 'contentUpdates',
@@ -295,6 +300,7 @@ export class Contentdrips implements INodeType {
 					},
 				],
 			},
+			// Carousel Input Method Selection
 			{
 				displayName: 'Carousel Data Input',
 				name: 'carouselInputMethod',
@@ -320,6 +326,7 @@ export class Contentdrips implements INodeType {
 				default: 'ui',
 				description: 'Choose how to provide carousel slide data',
 			},
+			// UI Method - Individual Fields
 			{
 				displayName: 'Enable Intro Slide',
 				name: 'enableIntroSlide',
@@ -469,6 +476,7 @@ export class Contentdrips implements INodeType {
 					},
 				],
 			},
+			// JSON Method - Single Field
 			{
 				displayName: 'Carousel JSON',
 				name: 'carouselJson',
@@ -515,13 +523,11 @@ export class Contentdrips implements INodeType {
 						item: i,
 					},
 				});
-			} catch (error: any) {
+			} catch (error) {
 				if (this.continueOnFail()) {
 					returnData.push({
 						json: {
-							error: error.message || 'Unknown error occurred',
-							resource: this.getNodeParameter('resource', i, 'unknown'),
-							operation: this.getNodeParameter('operation', i, 'unknown'),
+							error: error.message,
 						},
 						pairedItem: {
 							item: i,
@@ -536,141 +542,91 @@ export class Contentdrips implements INodeType {
 		return [returnData];
 	}
 
-	private async createGraphic(this: IExecuteFunctions, itemIndex: number) {
+	private async createGraphic(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
 		const templateId = this.getNodeParameter('templateId', itemIndex) as string;
 		const output = this.getNodeParameter('output', itemIndex) as string;
 		const addBranding = this.getNodeParameter('addBranding', itemIndex) as boolean;
 
-		const body: any = {
+		let body: IDataObject = {
 			template_id: templateId,
 			output,
 		};
 
+		// Add branding if specified
 		if (addBranding) {
 			const branding = this.getNodeParameter('branding', itemIndex) as IDataObject;
 			if (Object.keys(branding).length > 0) {
-				body.branding = branding;
+				body.branding = cleanEmptyFields(branding);
 			}
 		}
 
+		// Add content updates if specified
 		const contentUpdates = this.getNodeParameter('contentUpdates', itemIndex) as IDataObject;
 		if (contentUpdates.updates && Array.isArray(contentUpdates.updates)) {
 			body.content_update = contentUpdates.updates;
 		}
 
-		const response = await this.helpers.httpRequestWithAuthentication.call(
-			this,
-			'contentdripsApi',
-			{
-				method: 'POST' as IHttpRequestMethods,
-				url: '/render',
-				body,
-			},
-		);
+		// Clean and validate
+		body = cleanEmptyFields(body);
+		validateRequiredFields(body);
 
-		return response;
+		return contentdripsApiRequest.call(this, 'POST', '/render', body);
 	}
 
-	private async createCarousel(this: IExecuteFunctions, itemIndex: number) {
+	private async createCarousel(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
 		const templateId = this.getNodeParameter('templateId', itemIndex) as string;
 		const output = this.getNodeParameter('output', itemIndex) as string;
 		const addBranding = this.getNodeParameter('addBranding', itemIndex) as boolean;
 		const carouselInputMethod = this.getNodeParameter('carouselInputMethod', itemIndex) as string;
 
-		const body: any = {
+		let body: IDataObject = {
 			template_id: templateId,
 			output,
 		};
 
+		// Add branding if specified
 		if (addBranding) {
 			const branding = this.getNodeParameter('branding', itemIndex) as IDataObject;
 			if (Object.keys(branding).length > 0) {
-				body.branding = branding;
+				body.branding = cleanEmptyFields(branding);
 			}
 		}
 
+		// Add content updates if specified
 		const contentUpdates = this.getNodeParameter('contentUpdates', itemIndex) as IDataObject;
 		if (contentUpdates.updates && Array.isArray(contentUpdates.updates)) {
 			body.content_update = contentUpdates.updates;
 		}
 
-		let carousel: any = {};
-
-		if (carouselInputMethod === 'json') {
-			const carouselJsonParam = this.getNodeParameter('carouselJson', itemIndex);
-			
-			if (typeof carouselJsonParam === 'string') {
-				carousel = JSON.parse(carouselJsonParam);
-			} else {
-				carousel = carouselJsonParam;
-			}
-		} else {
-			const enableIntroSlide = this.getNodeParameter('enableIntroSlide', itemIndex) as boolean;
-			if (enableIntroSlide) {
-				const introSlide = this.getNodeParameter('introSlide', itemIndex) as IDataObject;
-				if (Object.keys(introSlide).length > 0) {
-					carousel.intro_slide = introSlide;
-				}
-			}
-
-			const slides = this.getNodeParameter('slides', itemIndex) as IDataObject;
-			if (slides.slide && Array.isArray(slides.slide)) {
-				carousel.slides = slides.slide;
-			}
-
-			const enableEndingSlide = this.getNodeParameter('enableEndingSlide', itemIndex) as boolean;
-			if (enableEndingSlide) {
-				const endingSlide = this.getNodeParameter('endingSlide', itemIndex) as IDataObject;
-				if (Object.keys(endingSlide).length > 0) {
-					carousel.ending_slide = endingSlide;
-				}
-			}
-		}
+		// Handle carousel data
+		const carousel = buildCarouselData(
+			carouselInputMethod,
+			this.getNodeParameter('enableIntroSlide', itemIndex, false) as boolean,
+			this.getNodeParameter('introSlide', itemIndex, {}) as IDataObject,
+			this.getNodeParameter('slides', itemIndex, {}) as IDataObject,
+			this.getNodeParameter('enableEndingSlide', itemIndex, false) as boolean,
+			this.getNodeParameter('endingSlide', itemIndex, {}) as IDataObject,
+			this.getNodeParameter('carouselJson', itemIndex, {}) as IDataObject,
+		);
 
 		if (Object.keys(carousel).length > 0) {
 			body.carousel = carousel;
 		}
 
-		const response = await this.helpers.httpRequestWithAuthentication.call(
-			this,
-			'contentdripsApi',
-			{
-				method: 'POST' as IHttpRequestMethods,
-				url: '/render?tool=carousel-maker',
-				body,
-			},
-		);
+		// Clean and validate
+		body = cleanEmptyFields(body);
+		validateRequiredFields(body);
 
-		return response;
+		return contentdripsApiRequest.call(this, 'POST', '/render?tool=carousel-maker', body);
 	}
 
-	private async getJobStatus(this: IExecuteFunctions, itemIndex: number) {
+	private async getJobStatus(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
 		const jobId = this.getNodeParameter('jobId', itemIndex) as string;
-
-		const response = await this.helpers.httpRequestWithAuthentication.call(
-			this,
-			'contentdripsApi',
-			{
-				method: 'GET' as IHttpRequestMethods,
-				url: `/job/${jobId}/status`,
-			},
-		);
-
-		return response;
+		return contentdripsApiRequest.call(this, 'GET', `/job/${jobId}/status`);
 	}
 
-	private async getJobResult(this: IExecuteFunctions, itemIndex: number) {
+	private async getJobResult(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
 		const jobId = this.getNodeParameter('jobId', itemIndex) as string;
-
-		const response = await this.helpers.httpRequestWithAuthentication.call(
-			this,
-			'contentdripsApi',
-			{
-				method: 'GET' as IHttpRequestMethods,
-				url: `/job/${jobId}/result`,
-			},
-		);
-
-		return response;
+		return contentdripsApiRequest.call(this, 'GET', `/job/${jobId}/result`);
 	}
 }
