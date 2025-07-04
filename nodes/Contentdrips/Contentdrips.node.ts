@@ -6,7 +6,7 @@ import type {
 	INodeTypeDescription,
 	IHttpRequestMethods,
 } from 'n8n-workflow';
-import { NodeApiError, NodeOperationError } from 'n8n-workflow';
+import { NodeApiError, NodeOperationError, NodeConnectionType } from 'n8n-workflow';
 
 export class Contentdrips implements INodeType {
 	description: INodeTypeDescription = {
@@ -20,8 +20,8 @@ export class Contentdrips implements INodeType {
 		defaults: {
 			name: 'Contentdrips',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionType.Main],
+		outputs: [NodeConnectionType.Main],
 		credentials: [
 			{
 				name: 'contentdripsApi',
@@ -637,9 +637,10 @@ export class Contentdrips implements INodeType {
 
 			return response;
 		} catch (error) {
+			const apiError = error instanceof Error ? error : new Error('Unknown API error');
 			throw new NodeApiError(
 				this.getNode(),
-				error,
+				apiError,
 				{ message: `Failed to create graphic with template ${templateId}`, itemIndex }
 			);
 		}
@@ -723,7 +724,7 @@ export class Contentdrips implements INodeType {
 				}
 				throw new NodeOperationError(
 					this.getNode(),
-					`Invalid JSON in carousel parameter: ${error.message}`,
+					`Invalid JSON in carousel parameter: ${error instanceof Error ? error.message : 'Unknown error'}`,
 					{ itemIndex }
 				);
 			}
@@ -787,9 +788,10 @@ export class Contentdrips implements INodeType {
 
 			return response;
 		} catch (error) {
+			const apiError = error instanceof Error ? error : new Error('Unknown API error');
 			throw new NodeApiError(
 				this.getNode(),
-				error,
+				apiError,
 				{ message: `Failed to create carousel with template ${templateId}`, itemIndex }
 			);
 		}
@@ -819,9 +821,10 @@ export class Contentdrips implements INodeType {
 
 			return response;
 		} catch (error) {
+			const apiError = error instanceof Error ? error : new Error('Unknown API error');
 			throw new NodeApiError(
 				this.getNode(),
-				error,
+				apiError,
 				{ message: `Failed to get status for job ${jobId}`, itemIndex }
 			);
 		}
@@ -851,9 +854,10 @@ export class Contentdrips implements INodeType {
 
 			return response;
 		} catch (error) {
+			const apiError = error instanceof Error ? error : new Error('Unknown API error');
 			throw new NodeApiError(
 				this.getNode(),
-				error,
+				apiError,
 				{ message: `Failed to get result for job ${jobId}`, itemIndex }
 			);
 		}
