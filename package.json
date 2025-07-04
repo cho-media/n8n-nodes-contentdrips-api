@@ -14,7 +14,7 @@
   ],
   "license": "MIT",
   "homepage": "https://github.com/cho-media/n8n-nodes-contentdrips-api",
-  "author": "n8n Community Contributor"
+  "author": "n8n Community Contributor",
   "repository": {
     "type": "git",
     "url": "https://github.com/cho-media/n8n-nodes-contentdrips-api.git"
