@@ -8,7 +8,6 @@ Contentdrips is a powerful API for creating carousels and static graphics progra
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
-
 ## Installation
 
 Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes/installation/) in the n8n community nodes documentation.
@@ -97,22 +96,24 @@ Before using this node, you need to:
 }
 ```
 
-#### Creating a Carousel - Two Methods
+#### Creating a Carousel - Clean & Simple
 
-**Method 1: Define in UI (Beginner-Friendly)**
+The carousel structure is much cleaner now:
+
+**Intro Slide** (Always available):
 ```json
 {
-  "resource": "carousel",
-  "operation": "create", 
-  "templateId": "126130",
-  "output": "png",
-  "carouselInputMethod": "ui",
-  "enableIntroSlide": true,
-  "introSlide": {
-    "heading": "Start Here",
-    "description": "Tips that actually work",
-    "image": "https://example.com/intro.jpg"
-  },
+  "heading": "Start Here",
+  "description": "Tips that actually work", 
+  "image": "https://example.com/intro.jpg"
+}
+```
+
+**Content Slides** - Choose one approach:
+
+*Option 1: Fixed UI Fields (for manual entry)*
+```json
+{
   "slides": {
     "slide": [
       {
@@ -124,54 +125,45 @@ Before using this node, you need to:
         "description": "Always give value."
       }
     ]
-  },
-  "enableEndingSlide": true,
-  "endingSlide": {
-    "heading": "Follow for more",
-    "description": "New tips every week."
   }
 }
 ```
 
-**Method 2: JSON Expression (Advanced/Dynamic)**
+*Option 2: JSON Expression (for dynamic content)*
 ```json
 {
-  "resource": "carousel",
-  "operation": "create", 
-  "templateId": "126130",
-  "output": "png",
-  "carouselInputMethod": "json",
-  "carouselJson": "{{ $json.carouselData }}"
+  "slidesJson": "{{ $json.dynamicSlides }}"
 }
 ```
 
-Where `$json.carouselData` contains:
+Where `$json.dynamicSlides` contains:
 ```json
-{
-  "intro_slide": {
-    "heading": "Start Here",
-    "description": "Tips that work"
+[
+  {
+    "heading": "Dynamic Tip 1",
+    "description": "From previous node"
   },
-  "slides": [
-    {
-      "heading": "Tip 1",
-      "description": "First tip"
-    },
-    {
-      "heading": "Tip 2", 
-      "description": "Second tip"
-    }
-  ],
-  "ending_slide": {
-    "heading": "Follow for more",
-    "description": "Weekly tips"
+  {
+    "heading": "Dynamic Tip 2", 
+    "description": "Also from previous node"
   }
+]
+```
+
+**Ending Slide** (Always available):
+```json
+{
+  "heading": "Follow for more",
+  "description": "New tips every week.",
+  "image": "https://example.com/end.jpg"
 }
 ```
 
-**Key Benefits of Each Method:**
-- **UI Method**: Perfect for fixed carousels, easy to configure
-- **JSON Method**: Ideal for dynamic content from previous nodes, unlimited slides
+**Key Benefits:**
+- **Simpler UX**: No complex toggles
+- **Always accessible**: Intro/ending fields always visible
+- **Flexible content**: Fixed UI or JSON expressions for content slides
+- **Standard n8n pattern**: Familiar to n8n users
 
 ### Branding
 
@@ -292,6 +284,13 @@ Number of slides depends on RSS feed items - could be 3 today, 10 tomorrow.
 - [n8n Community Nodes](https://docs.n8n.io/integrations/community-nodes/)
 
 ## Version History
+
+### 1.1.0
+- **Improved carousel UX**: Removed complex toggles, always show intro/ending fields
+- **Content slides**: Fixed UI fields OR JSON expression (standard n8n pattern)
+- **Output format**: Fixed to PNG/PDF only (per API documentation)
+- **Icon support**: SVG properly included in build process
+- **Simplified logic**: Cleaner, more intuitive user interface
 
 ### 1.0.0
 - Initial release
