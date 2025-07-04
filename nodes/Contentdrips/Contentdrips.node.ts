@@ -297,47 +297,92 @@ export class Contentdrips implements INodeType {
 					},
 				],
 			},
-			// Carousel-specific fields - Intro Slide (always available)
+			// Intro Slide Section
 			{
-				displayName: 'Intro Slide',
-				name: 'introSlide',
-				type: 'collection',
+				displayName: 'Enable Intro Slide',
+				name: 'enableIntroSlide',
+				type: 'boolean',
 				displayOptions: {
 					show: {
 						resource: ['carousel'],
 						operation: ['create'],
 					},
 				},
-				default: {},
-				placeholder: 'Add Intro Slide Fields',
+				default: false,
+				description: 'Whether to include an intro slide',
+			},
+			{
+				displayName: 'Intro Slide Heading',
+				name: 'introSlideHeading',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: ['carousel'],
+						operation: ['create'],
+						enableIntroSlide: [true],
+					},
+				},
+				default: '',
+				description: 'Heading for the intro slide (optional)',
+			},
+			{
+				displayName: 'Intro Slide Description',
+				name: 'introSlideDescription',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: ['carousel'],
+						operation: ['create'],
+						enableIntroSlide: [true],
+					},
+				},
+				default: '',
+				description: 'Description for the intro slide (optional)',
+			},
+			{
+				displayName: 'Intro Slide Image URL',
+				name: 'introSlideImage',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: ['carousel'],
+						operation: ['create'],
+						enableIntroSlide: [true],
+					},
+				},
+				default: '',
+				description: 'Image URL for the intro slide (optional)',
+			},
+			// Content Slides Input Method Selection
+			{
+				displayName: 'Content Slides Input Method',
+				name: 'contentSlidesInputMethod',
+				type: 'options',
+				displayOptions: {
+					show: {
+						resource: ['carousel'],
+						operation: ['create'],
+					},
+				},
 				options: [
 					{
-						displayName: 'Heading',
-						name: 'heading',
-						type: 'string',
-						default: '',
-						description: 'Heading for the intro slide (optional)',
+						name: 'Build Slides in UI',
+						value: 'ui',
+						description: 'Manually add slides using the interface',
 					},
 					{
-						displayName: 'Description',
-						name: 'description',
-						type: 'string',
-						default: '',
-						description: 'Description for the intro slide (optional)',
-					},
-					{
-						displayName: 'Image URL',
-						name: 'image',
-						type: 'string',
-						default: '',
-						description: 'Image URL for the intro slide (optional)',
+						name: 'Use JSON Expression',
+						value: 'json',
+						description: 'Provide slides data as JSON (for dynamic content)',
 					},
 				],
+				default: 'ui',
+				description: 'Choose how to provide content slides data',
 			},
-			// Content Slides with Fixed vs Expression option
+			// UI Method - Fixed Collection for Content Slides
 			{
 				displayName: 'Content Slides',
-				name: 'slides',
+				name: 'contentSlides',
 				type: 'fixedCollection',
 				typeOptions: {
 					multipleValues: true,
@@ -346,9 +391,10 @@ export class Contentdrips implements INodeType {
 					show: {
 						resource: ['carousel'],
 						operation: ['create'],
+						contentSlidesInputMethod: ['ui'],
 					},
 				},
-				description: 'The content slides for the carousel',
+				description: 'The content slides for the carousel. Add as many slides as needed.',
 				default: {},
 				placeholder: 'Add Slide',
 				options: [
@@ -381,56 +427,76 @@ export class Contentdrips implements INodeType {
 					},
 				],
 			},
-			// Alternative: JSON Expression for Content Slides
+			// JSON Method for Content Slides
 			{
-				displayName: 'Content Slides (JSON)',
-				name: 'slidesJson',
+				displayName: 'Content Slides JSON',
+				name: 'contentSlidesJson',
 				type: 'json',
 				displayOptions: {
 					show: {
 						resource: ['carousel'],
 						operation: ['create'],
+						contentSlidesInputMethod: ['json'],
 					},
 				},
-				default: '[\n  {\n    "heading": "Tip 1",\n    "description": "First tip",\n    "image": "https://example.com/1.jpg"\n  },\n  {\n    "heading": "Tip 2",\n    "description": "Second tip",\n    "image": "https://example.com/2.jpg"\n  }\n]',
-				description: 'Content slides as JSON array. Use this for dynamic content from expressions like {{ $json.slides }}. All fields (heading, description, image) are optional. If both fixed slides and JSON are provided, JSON takes precedence.',
+				default: '[\n  {\n    "heading": "Tip 1",\n    "description": "First tip description",\n    "image": "https://example.com/1.jpg"\n  },\n  {\n    "heading": "Tip 2",\n    "description": "Second tip description",\n    "image": "https://example.com/2.jpg"\n  }\n]',
+				description: 'Content slides as JSON array. Use expressions like {{ $json.slides }} for dynamic data. All fields (heading, description, image) are optional.',
 			},
-			// Ending Slide (always available)
+			// Ending Slide Section
 			{
-				displayName: 'Ending Slide',
-				name: 'endingSlide',
-				type: 'collection',
+				displayName: 'Enable Ending Slide',
+				name: 'enableEndingSlide',
+				type: 'boolean',
 				displayOptions: {
 					show: {
 						resource: ['carousel'],
 						operation: ['create'],
 					},
 				},
-				default: {},
-				placeholder: 'Add Ending Slide Fields',
-				options: [
-					{
-						displayName: 'Heading',
-						name: 'heading',
-						type: 'string',
-						default: '',
-						description: 'Heading for the ending slide (optional)',
+				default: false,
+				description: 'Whether to include an ending slide',
+			},
+			{
+				displayName: 'Ending Slide Heading',
+				name: 'endingSlideHeading',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: ['carousel'],
+						operation: ['create'],
+						enableEndingSlide: [true],
 					},
-					{
-						displayName: 'Description',
-						name: 'description',
-						type: 'string',
-						default: '',
-						description: 'Description for the ending slide (optional)',
+				},
+				default: '',
+				description: 'Heading for the ending slide (optional)',
+			},
+			{
+				displayName: 'Ending Slide Description',
+				name: 'endingSlideDescription',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: ['carousel'],
+						operation: ['create'],
+						enableEndingSlide: [true],
 					},
-					{
-						displayName: 'Image URL',
-						name: 'image',
-						type: 'string',
-						default: '',
-						description: 'Image URL for the ending slide (optional)',
+				},
+				default: '',
+				description: 'Description for the ending slide (optional)',
+			},
+			{
+				displayName: 'Ending Slide Image URL',
+				name: 'endingSlideImage',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: ['carousel'],
+						operation: ['create'],
+						enableEndingSlide: [true],
 					},
-				],
+				},
+				default: '',
+				description: 'Image URL for the ending slide (optional)',
 			},
 		],
 	};
@@ -539,38 +605,56 @@ async function createCarousel(this: IExecuteFunctions, itemIndex: number): Promi
 		body.content_update = contentUpdates.updates;
 	}
 
-	// Build carousel data with new simplified approach
+	// Build carousel data
 	const carousel: IDataObject = {};
 
-	// Always check for intro slide (no toggle needed)
-	const introSlide = this.getNodeParameter('introSlide', itemIndex, {}) as IDataObject;
-	if (Object.keys(introSlide).length > 0) {
-		carousel.intro_slide = cleanEmptyFields(introSlide);
+	// Handle intro slide
+	const enableIntroSlide = this.getNodeParameter('enableIntroSlide', itemIndex, false) as boolean;
+	if (enableIntroSlide) {
+		const introSlide: IDataObject = {};
+		const heading = this.getNodeParameter('introSlideHeading', itemIndex, '') as string;
+		const description = this.getNodeParameter('introSlideDescription', itemIndex, '') as string;
+		const image = this.getNodeParameter('introSlideImage', itemIndex, '') as string;
+		
+		if (heading) introSlide.heading = heading;
+		if (description) introSlide.description = description;
+		if (image) introSlide.image = image;
+		
+		if (Object.keys(introSlide).length > 0) {
+			carousel.intro_slide = introSlide;
+		}
 	}
 
-	// Content slides: Check JSON first, then UI fields
-	const slidesJson = this.getNodeParameter('slidesJson', itemIndex, '') as string;
-	if (slidesJson.trim()) {
-		try {
-			const parsedSlides = JSON.parse(slidesJson);
-			if (Array.isArray(parsedSlides) && parsedSlides.length > 0) {
-				carousel.slides = parsedSlides;
-			}
-		} catch (error) {
-			throw new Error('Invalid JSON in Content Slides (JSON): ' + (error instanceof Error ? error.message : 'Unknown error'));
+	// Handle content slides
+	const contentSlidesInputMethod = this.getNodeParameter('contentSlidesInputMethod', itemIndex, 'ui') as string;
+	
+	if (contentSlidesInputMethod === 'ui') {
+		const contentSlides = this.getNodeParameter('contentSlides', itemIndex, {}) as IDataObject;
+		if (contentSlides.slide && Array.isArray(contentSlides.slide) && contentSlides.slide.length > 0) {
+			carousel.slides = contentSlides.slide;
 		}
 	} else {
-		// Use UI fields if no JSON provided
-		const slides = this.getNodeParameter('slides', itemIndex, {}) as IDataObject;
-		if (slides.slide && Array.isArray(slides.slide) && slides.slide.length > 0) {
-			carousel.slides = slides.slide;
+		const contentSlidesJson = this.getNodeParameter('contentSlidesJson', itemIndex, []) as any[];
+		if (Array.isArray(contentSlidesJson) && contentSlidesJson.length > 0) {
+			carousel.slides = contentSlidesJson;
 		}
 	}
 
-	// Always check for ending slide (no toggle needed)
-	const endingSlide = this.getNodeParameter('endingSlide', itemIndex, {}) as IDataObject;
-	if (Object.keys(endingSlide).length > 0) {
-		carousel.ending_slide = cleanEmptyFields(endingSlide);
+	// Handle ending slide
+	const enableEndingSlide = this.getNodeParameter('enableEndingSlide', itemIndex, false) as boolean;
+	if (enableEndingSlide) {
+		const endingSlide: IDataObject = {};
+		const heading = this.getNodeParameter('endingSlideHeading', itemIndex, '') as string;
+		const description = this.getNodeParameter('endingSlideDescription', itemIndex, '') as string;
+		const image = this.getNodeParameter('endingSlideImage', itemIndex, '') as string;
+		
+		if (heading) endingSlide.heading = heading;
+		if (description) endingSlide.description = description;
+		if (image) endingSlide.image = image;
+		
+		if (Object.keys(endingSlide).length > 0) {
+			carousel.ending_slide = endingSlide;
+		}
 	}
 
 	if (Object.keys(carousel).length > 0) {
