@@ -40,17 +40,23 @@ export class ContentdripsApi implements ICredentialType {
 			url: '/render',
 			method: 'POST',
 			body: {
-				template_id: 'test',
+				template_id: 'invalid_test_template',
 				output: 'png',
 			},
 		},
 		rules: [
 			{
-				type: 'responseSuccessBody',
+				type: 'responseCode',
 				properties: {
-					key: 'error',
-					value: 'Validation error',
-					message: 'Invalid credentials. Please check your API token.',
+					value: 401,
+					message: 'Invalid API token. Please check your credentials in Contentdrips.',
+				},
+			},
+			{
+				type: 'responseCode', 
+				properties: {
+					value: 400,
+					message: 'API token is valid but template not found (this is expected for credential test).',
 				},
 			},
 		],
