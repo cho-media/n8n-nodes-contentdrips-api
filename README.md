@@ -8,6 +8,10 @@ Contentdrips is a powerful API for creating carousels and static graphics progra
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
+## ✨ **Zero Vulnerabilities** 
+
+This node is built with modern, secure dependencies and follows current n8n best practices. **No deprecated packages, no security vulnerabilities.**
+
 ## Installation
 
 Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes/installation/) in the n8n community nodes documentation.
