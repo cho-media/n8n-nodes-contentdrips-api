@@ -34,36 +34,6 @@ export async function contentdripsApiRequest(
 	return this.helpers.httpRequestWithAuthentication.call(this, 'contentdripsApi', options);
 }
 
-export function buildCarouselData(
-	inputMethod: string,
-	enableIntroSlide: boolean,
-	introSlide: IDataObject,
-	slides: IDataObject,
-	enableEndingSlide: boolean,
-	endingSlide: IDataObject,
-	carouselJson: IDataObject,
-): IDataObject {
-	if (inputMethod === 'json') {
-		return carouselJson;
-	}
-
-	const carousel: IDataObject = {};
-
-	if (enableIntroSlide && Object.keys(introSlide).length > 0) {
-		carousel.intro_slide = introSlide;
-	}
-
-	if (slides.slide && Array.isArray(slides.slide) && slides.slide.length > 0) {
-		carousel.slides = slides.slide;
-	}
-
-	if (enableEndingSlide && Object.keys(endingSlide).length > 0) {
-		carousel.ending_slide = endingSlide;
-	}
-
-	return carousel;
-}
-
 export function validateRequiredFields(body: IDataObject): void {
 	if (!body.template_id) {
 		throw new Error('Template ID is required');
