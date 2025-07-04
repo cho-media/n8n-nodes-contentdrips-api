@@ -13,31 +13,31 @@
     "design"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/YOUR_USERNAME/n8n-nodes-contentdrips",
-  "author": {
-    "name": "Your Name",
-    "email": "your.email@example.com"
-  },
+  "homepage": "https://github.com/cho-media/n8n-nodes-contentdrips-api",
+  "author": "n8n Community Contributor"
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOUR_USERNAME/n8n-nodes-contentdrips.git"
+    "url": "https://github.com/cho-media/n8n-nodes-contentdrips-api.git"
   },
   "bugs": {
-    "url": "https://github.com/YOUR_USERNAME/n8n-nodes-contentdrips/issues"
+    "url": "https://github.com/cho-media/n8n-nodes-contentdrips-api/issues"
   },
   "engines": {
-    "node": ">=20.15"
+    "node": ">=20.10",
+    "pnpm": ">=9.1"
   },
+  "packageManager": "pnpm@9.1.4",
   "main": "index.js",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "build": "tsc && gulp build:icons",
     "dev": "tsc --watch",
     "format": "prettier nodes credentials --write",
     "lint": "eslint nodes credentials package.json",
     "lintfix": "eslint nodes credentials package.json --fix",
-    "prepublishOnly": "npm run build && npm run lint -- -c .eslintrc.prepublish.js",
+    "prepublishOnly": "pnpm build && pnpm lint -c .eslintrc.prepublish.js nodes credentials package.json",
     "clean": "rm -rf dist",
-    "test": "npm run lint && npm run build"
+    "test": "pnpm lint && pnpm build"
   },
   "files": [
     "dist"
@@ -52,15 +52,15 @@
     ]
   },
   "devDependencies": {
-    "@types/node": "^20.8.0",
-    "@typescript-eslint/eslint-plugin": "^7.15.0",
-    "@typescript-eslint/parser": "^7.15.0",
-    "eslint": "^8.56.0",
-    "eslint-plugin-n8n-nodes-base": "^1.16.1",
-    "gulp": "^4.0.2",
+    "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.17.0",
+    "eslint": "^9.17.0",
+    "eslint-plugin-n8n-nodes-base": "^1.16.3",
+    "gulp": "^5.0.0",
     "n8n-workflow": "*",
-    "prettier": "^3.3.2",
-    "typescript": "^5.5.3"
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2"
   },
   "peerDependencies": {
     "n8n-workflow": "*"
