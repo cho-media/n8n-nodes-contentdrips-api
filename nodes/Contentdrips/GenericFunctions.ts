@@ -2,7 +2,7 @@ import type {
 	IDataObject,
 	IExecuteFunctions,
 	IHttpRequestMethods,
-	IRequestOptions,
+	IHttpRequestOptions,
 } from 'n8n-workflow';
 
 export async function contentdripsApiRequest(
@@ -12,7 +12,7 @@ export async function contentdripsApiRequest(
 	body: IDataObject = {},
 	qs: IDataObject = {},
 ): Promise<any> {
-	const options: IRequestOptions = {
+	const options: IHttpRequestOptions = {
 		method,
 		body,
 		qs,
