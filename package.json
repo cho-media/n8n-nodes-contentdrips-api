@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-contentdrips-api",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "n8n community node for Contentdrips - Create carousels and static graphics using the Contentdrips API",
   "keywords": [
     "n8n-community-node-package",
@@ -30,7 +30,8 @@
   },
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run copy-assets",
+    "copy-assets": "cp nodes/Contentdrips/*.svg dist/nodes/Contentdrips/ 2>/dev/null || mkdir -p dist/nodes/Contentdrips && cp nodes/Contentdrips/*.svg dist/nodes/Contentdrips/",
     "dev": "tsc --watch",
     "format": "prettier nodes credentials --write",
     "lint": "eslint nodes credentials package.json",
@@ -50,10 +51,10 @@
     ]
   },
   "devDependencies": {
+    "@eslint/js": "^9.30.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
-    "eslint": "^9.0.0",
-    "eslint-plugin-n8n-nodes-base": "^1.16.1",
+    "eslint": "^9.30.0",
     "prettier": "^3.3.0",
     "typescript": "^5.6.0"
   },
