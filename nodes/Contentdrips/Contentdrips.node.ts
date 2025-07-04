@@ -544,6 +544,7 @@ export class Contentdrips implements INodeType {
 	}
 }
 
+// Functions outside the class
 async function createGraphic(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
 	const templateId = this.getNodeParameter('templateId', itemIndex) as string;
 	const output = this.getNodeParameter('output', itemIndex) as string;
