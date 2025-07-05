@@ -13,12 +13,16 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "strictPropertyInitialization": false,
+    "removeComments": true,
+    "preserveConstEnums": true,
     "sourceMap": false,
-    "inlineSourceMap": false,
-    "removeComments": true
+    "noEmitOnError": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true
   },
   "include": [
     "credentials/**/*",
@@ -28,6 +32,6 @@
     "dist/**/*",
     "node_modules/**/*",
     "**/*.test.ts",
-    "gulpfile.js"
+    "**/*.spec.ts"
   ]
 }
