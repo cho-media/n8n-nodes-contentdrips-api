@@ -312,7 +312,7 @@ Google Sheets → Process Data → Multiple Contentdrips (async) → Monitor Job
 
 - Check the [Contentdrips API documentation](https://app.contentdrips.com/api-management)
 - Visit the [n8n community forum](https://community.n8n.io)
-- Report bugs on the [GitHub repository](https://github.com/YOUR_USERNAME/n8n-nodes-contentdrips-api/issues)
+- Report bugs on the [GitHub repository](https://github.com/cho-media/n8n-nodes-contentdrips-api/issues)
 
 ## Resources
 
