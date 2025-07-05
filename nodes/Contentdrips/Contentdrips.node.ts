@@ -20,6 +20,14 @@ const wait = (ms: number): Promise<void> => {
 	});
 };
 
+// Type guard for job_id validation
+function validateJobId(jobId: unknown): string {
+	if (typeof jobId !== 'string' || !jobId) {
+		throw new Error('Invalid job_id received from Contentdrips API. Expected a valid job ID string.');
+	}
+	return jobId;
+}
+
 export class Contentdrips implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Contentdrips',
@@ -662,7 +670,8 @@ async function createGraphic(this: IExecuteFunctions, itemIndex: number): Promis
 	}
 
 	// Sync mode: wait for completion and return final result
-	return await waitForJobCompletion.call(this, initialResponse.job_id, itemIndex);
+	const jobId = validateJobId(initialResponse.job_id);
+	return await waitForJobCompletion.call(this, jobId, itemIndex);
 }
 
 async function createCarousel(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
@@ -771,7 +780,8 @@ async function createCarousel(this: IExecuteFunctions, itemIndex: number): Promi
 	}
 
 	// Sync mode: wait for completion and return final result
-	return await waitForJobCompletion.call(this, initialResponse.job_id, itemIndex);
+	const jobId = validateJobId(initialResponse.job_id);
+	return await waitForJobCompletion.call(this, jobId, itemIndex);
 }
 
 async function waitForJobCompletion(this: IExecuteFunctions, jobId: string, itemIndex: number): Promise<IDataObject> {
