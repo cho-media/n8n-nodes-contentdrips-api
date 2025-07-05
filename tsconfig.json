@@ -12,7 +12,13 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
+    "sourceMap": false,
+    "inlineSourceMap": false,
+    "removeComments": true
   },
   "include": [
     "credentials/**/*",
@@ -20,6 +26,7 @@
   ],
   "exclude": [
     "dist/**/*",
-    "node_modules/**/*"
+    "node_modules/**/*",
+    "**/*.test.ts"
   ]
 }
