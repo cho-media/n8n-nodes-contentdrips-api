@@ -13,7 +13,7 @@ export class Contentdrips implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Contentdrips',
 		name: 'contentdrips',
-		icon: 'file:contentdrips_icon.svg',
+		icon: 'file:contentdrips.svg',
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
