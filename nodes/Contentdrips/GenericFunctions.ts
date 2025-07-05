@@ -60,3 +60,15 @@ export function cleanEmptyFields(obj: IDataObject): IDataObject {
 	
 	return cleaned;
 }
+
+export function isJobCompleted(status: string): boolean {
+	return status === 'completed' || status === 'success';
+}
+
+export function isJobFailed(status: string): boolean {
+	return status === 'failed' || status === 'error';
+}
+
+export function isJobPending(status: string): boolean {
+	return status === 'pending' || status === 'processing' || status === 'queued' || status === 'IN_QUEUE' || status === 'IN_PROGRESS';
+}
