@@ -11,7 +11,7 @@ export async function contentdripsApiRequest(
 	endpoint: string,
 	body: IDataObject = {},
 	qs: IDataObject = {},
-): Promise<any> {
+): Promise<IDataObject> {
 	const options: IHttpRequestOptions = {
 		method,
 		body,
