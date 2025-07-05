@@ -177,6 +177,69 @@ export class Contentdrips implements INodeType {
 				default: 'png',
 				description: 'The output format for the generated content',
 			},
+			// Execution Mode - NEW PARAMETER
+			{
+				displayName: 'Execution Mode',
+				name: 'executionMode',
+				type: 'options',
+				displayOptions: {
+					show: {
+						resource: ['graphic', 'carousel'],
+						operation: ['create'],
+					},
+				},
+				options: [
+					{
+						name: 'Synchronous (Wait for Completion)',
+						value: 'sync',
+						description: 'Wait for job completion and return final download URLs',
+					},
+					{
+						name: 'Asynchronous (Return Job ID)',
+						value: 'async',
+						description: 'Return job ID immediately for manual status checking with Job operations',
+					},
+				],
+				default: 'sync',
+				description: 'Whether to wait for completion or return job ID immediately',
+			},
+			// Polling settings - only shown for sync mode
+			{
+				displayName: 'Polling Interval (seconds)',
+				name: 'pollingInterval',
+				type: 'number',
+				displayOptions: {
+					show: {
+						resource: ['graphic', 'carousel'],
+						operation: ['create'],
+						executionMode: ['sync'],
+					},
+				},
+				default: 5,
+				description: 'How often to check job status (minimum 1 second, maximum 60 seconds)',
+				typeOptions: {
+					minValue: 1,
+					maxValue: 60,
+				},
+			},
+			{
+				displayName: 'Maximum Wait Time (minutes)',
+				name: 'maxWaitTime',
+				type: 'number',
+				displayOptions: {
+					show: {
+						resource: ['graphic', 'carousel'],
+						operation: ['create'],
+						executionMode: ['sync'],
+					},
+				},
+				default: 10,
+				description: 'Maximum time to wait for job completion (minimum 1 minute, maximum 30 minutes)',
+				typeOptions: {
+					minValue: 1,
+					maxValue: 30,
+				},
+			},
 			// Branding section
 			{
 				displayName: 'Add Branding',
@@ -210,35 +273,35 @@ export class Contentdrips implements INodeType {
 						name: 'name',
 						type: 'string',
 						default: '',
-						description: 'Your name or brand name (optional)',
+						description: 'Your name or brand name',
 					},
 					{
 						displayName: 'Handle',
 						name: 'handle',
 						type: 'string',
 						default: '',
-						description: 'Your social media handle (optional), e.g., @username',
+						description: 'Your social media handle, e.g., @username',
 					},
 					{
 						displayName: 'Bio',
 						name: 'bio',
 						type: 'string',
 						default: '',
-						description: 'Short bio or description (optional)',
+						description: 'Short bio or description',
 					},
 					{
 						displayName: 'Website URL',
 						name: 'website_url',
 						type: 'string',
 						default: '',
-						description: 'Your website URL (optional)',
+						description: 'Your website URL',
 					},
 					{
 						displayName: 'Avatar Image URL',
 						name: 'avatar_image_url',
 						type: 'string',
 						default: '',
-						description: 'URL to your avatar image (optional)',
+						description: 'URL to your avatar image',
 					},
 				],
 			},
@@ -323,7 +386,7 @@ export class Contentdrips implements INodeType {
 					},
 				},
 				default: '',
-				description: 'Heading for the intro slide (optional)',
+				description: 'Heading for the intro slide',
 			},
 			{
 				displayName: 'Intro Slide Description',
@@ -337,7 +400,7 @@ export class Contentdrips implements INodeType {
 					},
 				},
 				default: '',
-				description: 'Description for the intro slide (optional)',
+				description: 'Description for the intro slide',
 			},
 			{
 				displayName: 'Intro Slide Image URL',
@@ -351,7 +414,7 @@ export class Contentdrips implements INodeType {
 					},
 				},
 				default: '',
-				description: 'Image URL for the intro slide (optional)',
+				description: 'Image URL for the intro slide',
 			},
 			// Content Slides Input Method Selection
 			{
@@ -407,21 +470,21 @@ export class Contentdrips implements INodeType {
 								name: 'heading',
 								type: 'string',
 								default: '',
-								description: 'Heading for this slide (optional)',
+								description: 'Heading for this slide',
 							},
 							{
 								displayName: 'Description',
 								name: 'description',
 								type: 'string',
 								default: '',
-								description: 'Description for this slide (optional)',
+								description: 'Description for this slide',
 							},
 							{
 								displayName: 'Image URL',
 								name: 'image',
 								type: 'string',
 								default: '',
-								description: 'Image URL for this slide (optional)',
+								description: 'Image URL for this slide',
 							},
 						],
 					},
@@ -468,7 +531,7 @@ export class Contentdrips implements INodeType {
 					},
 				},
 				default: '',
-				description: 'Heading for the ending slide (optional)',
+				description: 'Heading for the ending slide',
 			},
 			{
 				displayName: 'Ending Slide Description',
@@ -482,7 +545,7 @@ export class Contentdrips implements INodeType {
 					},
 				},
 				default: '',
-				description: 'Description for the ending slide (optional)',
+				description: 'Description for the ending slide',
 			},
 			{
 				displayName: 'Ending Slide Image URL',
@@ -496,7 +559,7 @@ export class Contentdrips implements INodeType {
 					},
 				},
 				default: '',
-				description: 'Image URL for the ending slide (optional)',
+				description: 'Image URL for the ending slide',
 			},
 		],
 	};
@@ -554,6 +617,7 @@ async function createGraphic(this: IExecuteFunctions, itemIndex: number): Promis
 	const templateId = this.getNodeParameter('templateId', itemIndex) as string;
 	const output = this.getNodeParameter('output', itemIndex) as string;
 	const addBranding = this.getNodeParameter('addBranding', itemIndex) as boolean;
+	const executionMode = this.getNodeParameter('executionMode', itemIndex, 'sync') as string;
 
 	let body: IDataObject = {
 		template_id: templateId,
@@ -578,13 +642,23 @@ async function createGraphic(this: IExecuteFunctions, itemIndex: number): Promis
 	body = cleanEmptyFields(body);
 	validateRequiredFields(body);
 
-	return contentdripsApiRequest.call(this, 'POST', '/render', body);
+	// Make the initial request
+	const initialResponse = await contentdripsApiRequest.call(this, 'POST', '/render', body);
+
+	// If async mode, return the job info immediately
+	if (executionMode === 'async') {
+		return initialResponse;
+	}
+
+	// If sync mode, wait for completion and return final result
+	return await waitForJobCompletion.call(this, initialResponse.job_id, itemIndex);
 }
 
 async function createCarousel(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
 	const templateId = this.getNodeParameter('templateId', itemIndex) as string;
 	const output = this.getNodeParameter('output', itemIndex) as string;
 	const addBranding = this.getNodeParameter('addBranding', itemIndex) as boolean;
+	const executionMode = this.getNodeParameter('executionMode', itemIndex, 'sync') as string;
 
 	let body: IDataObject = {
 		template_id: templateId,
@@ -665,7 +739,16 @@ async function createCarousel(this: IExecuteFunctions, itemIndex: number): Promi
 	body = cleanEmptyFields(body);
 	validateRequiredFields(body);
 
-	return contentdripsApiRequest.call(this, 'POST', '/render?tool=carousel-maker', body);
+	// Make the initial request
+	const initialResponse = await contentdripsApiRequest.call(this, 'POST', '/render?tool=carousel-maker', body);
+
+	// If async mode, return the job info immediately
+	if (executionMode === 'async') {
+		return initialResponse;
+	}
+
+	// If sync mode, wait for completion and return final result
+	return await waitForJobCompletion.call(this, initialResponse.job_id, itemIndex);
 }
 
 async function getJobStatus(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
@@ -676,4 +759,55 @@ async function getJobStatus(this: IExecuteFunctions, itemIndex: number): Promise
 async function getJobResult(this: IExecuteFunctions, itemIndex: number): Promise<IDataObject> {
 	const jobId = this.getNodeParameter('jobId', itemIndex) as string;
 	return contentdripsApiRequest.call(this, 'GET', `/job/${jobId}/result`);
+}
+
+async function waitForJobCompletion(this: IExecuteFunctions, jobId: string, itemIndex: number): Promise<IDataObject> {
+	const pollingInterval = this.getNodeParameter('pollingInterval', itemIndex, 5) as number;
+	const maxWaitTime = this.getNodeParameter('maxWaitTime', itemIndex, 10) as number;
+	
+	const startTime = Date.now();
+	const maxWaitMs = maxWaitTime * 60 * 1000; // Convert minutes to milliseconds
+	const pollingIntervalMs = pollingInterval * 1000; // Convert seconds to milliseconds
+
+	let statusCheckCount = 0;
+
+	while (Date.now() - startTime < maxWaitMs) {
+		try {
+			statusCheckCount++;
+			
+			// Check job status
+			const statusResponse = await contentdripsApiRequest.call(this, 'GET', `/job/${jobId}/status`);
+			
+			// Check if job is completed
+			if (statusResponse.status === 'completed' || statusResponse.status === 'success') {
+				// Get the final result
+				const resultResponse = await contentdripsApiRequest.call(this, 'GET', `/job/${jobId}/result`);
+				return {
+					...resultResponse,
+					job_id: jobId,
+					processing_time_seconds: Math.round((Date.now() - startTime) / 1000),
+					status_checks_performed: statusCheckCount,
+				};
+			}
+			
+			// Check if job failed
+			if (statusResponse.status === 'failed' || statusResponse.status === 'error') {
+				throw new Error(`Job failed: ${statusResponse.error_details || statusResponse.message || 'Unknown error'}`);
+			}
+			
+			// Job is still processing, wait before next check
+			await new Promise(resolve => setTimeout(resolve, pollingIntervalMs));
+			
+		} catch (error) {
+			if (error instanceof Error && error.message.includes('Job failed:')) {
+				throw error;
+			}
+			// For other errors (network issues, etc.), continue polling with backoff
+			const backoffDelay = Math.min(pollingIntervalMs * Math.pow(1.5, statusCheckCount - 1), 30000);
+			await new Promise(resolve => setTimeout(resolve, backoffDelay));
+		}
+	}
+	
+	// Timeout reached
+	throw new Error(`Job completion timeout reached (${maxWaitTime} minutes). Job ID: ${jobId}. Use the Job > Get Status operation to check manually.`);
 }
