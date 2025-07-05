@@ -270,7 +270,7 @@ Google Sheets → Process Data → Multiple Contentdrips (async) → Monitor Job
 
 - Minimum n8n version: 0.198.0
 - Tested with n8n version: 1.0.0+
-- Node.js: 18.18.0+
+- Node.js: 20.15.0+
 
 ## Troubleshooting
 
@@ -312,7 +312,7 @@ Google Sheets → Process Data → Multiple Contentdrips (async) → Monitor Job
 
 - Check the [Contentdrips API documentation](https://app.contentdrips.com/api-management)
 - Visit the [n8n community forum](https://community.n8n.io)
-- Report bugs on the [GitHub repository](https://github.com/cho-media/n8n-nodes-contentdrips-api/issues)
+- Report bugs on the [GitHub repository](https://github.com/YOUR_USERNAME/n8n-nodes-contentdrips-api/issues)
 
 ## Resources
 
@@ -329,7 +329,8 @@ Google Sheets → Process Data → Multiple Contentdrips (async) → Monitor Job
 - **NEW**: Configurable polling intervals and timeout settings
 - **IMPROVED**: Enhanced error handling with detailed job failure information
 - **IMPROVED**: Better response data including processing time and status check counts
-- **FIXED**: SVG icon loading issues
+- **FIXED**: SVG icon loading issues using industry standard gulp build process
+- **UPDATED**: Node.js requirement to >=20.15 for latest compatibility
 
 ### 1.1.3
 - Bug fixes and stability improvements
