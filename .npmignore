@@ -1,0 +1,65 @@
+# Source files
+credentials/
+nodes/
+*.ts
+!*.d.ts
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build tools
+tsconfig.json
+eslint.config.js
+.eslintcache
+
+# Testing
+test/
+tests/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
+# Documentation
+README.md
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/
+.travis.yml
+.circleci/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Coverage
+coverage/
+*.lcov
+.nyc_output
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.test
+.env.local
+.env.production
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+*.swp
+*.swo
