@@ -45,6 +45,22 @@ RUN cd /usr/local/lib/node_modules/n8n && npm install n8n-nodes-contentdrips-api
 - **Get Status**: Check the processing status of a job
 - **Get Result**: Get the final result of a completed job
 
+## Execution Modes
+
+This node supports two execution modes for creating graphics and carousels:
+
+### Synchronous Mode (Default)
+- **Default behavior**: Waits for job completion and returns final download URLs
+- **Best for**: Simple workflows where you need the final result immediately
+- **Configurable**: Polling interval (1-60 seconds) and maximum wait time (1-30 minutes)
+- **Returns**: Final download URLs, job ID, processing time, and status check count
+
+### Asynchronous Mode
+- **Immediate return**: Returns job ID immediately without waiting
+- **Best for**: Complex workflows requiring parallel processing or custom job management
+- **Use with**: Job operations for manual status checking and result retrieval
+- **Returns**: Job ID and initial status information
+
 ## Credentials
 
 You need to authenticate with the Contentdrips API using an API token.
@@ -75,7 +91,7 @@ Before using this node, you need to:
 
 ### Basic Usage
 
-#### Creating a Static Graphic
+#### Creating a Static Graphic (Synchronous Mode)
 
 ```json
 {
@@ -83,6 +99,9 @@ Before using this node, you need to:
   "operation": "create",
   "templateId": "126130",
   "output": "png",
+  "executionMode": "sync",
+  "pollingInterval": 5,
+  "maxWaitTime": 10,
   "contentUpdates": {
     "updates": [
       {
@@ -94,6 +113,27 @@ Before using this node, you need to:
         "type": "textbox", 
         "label": "hashtag_1",
         "value": "#automation"
+      }
+    ]
+  }
+}
+```
+
+#### Creating a Graphic (Asynchronous Mode)
+
+```json
+{
+  "resource": "graphic",
+  "operation": "create",
+  "templateId": "126130",
+  "output": "png",
+  "executionMode": "async",
+  "contentUpdates": {
+    "updates": [
+      {
+        "type": "textbox",
+        "label": "title_1",
+        "value": "My Dynamic Title"
       }
     ]
   }
@@ -114,13 +154,16 @@ Before using this node, you need to:
 - Enable/disable toggle  
 - When enabled: heading, description, and image fields automatically appear
 
-**Example - UI Method:**
+**Example - UI Method (Synchronous):**
 ```json
 {
   "resource": "carousel",
   "operation": "create", 
   "templateId": "126130",
   "output": "png",
+  "executionMode": "sync",
+  "pollingInterval": 10,
+  "maxWaitTime": 15,
   "enableIntroSlide": true,
   "introSlideHeading": "Welcome!",
   "introSlideDescription": "Let's get started",
@@ -143,13 +186,14 @@ Before using this node, you need to:
 }
 ```
 
-**Example - JSON Method for Content Slides:**
+**Example - JSON Method for Content Slides (Asynchronous):**
 ```json
 {
   "resource": "carousel",
   "operation": "create", 
   "templateId": "126130",
   "output": "pdf",
+  "executionMode": "async",
   "contentSlidesInputMethod": "json",
   "contentSlidesJson": "{{ $json.dynamicSlides }}"
 }
@@ -186,74 +230,47 @@ You can include branding information that will be automatically applied to templ
 }
 ```
 
-### Job Management
+### Job Management (Asynchronous Workflows)
 
-Contentdrips processes requests asynchronously. After creating a graphic or carousel:
+When using asynchronous mode, you can manually manage jobs:
 
-1. You'll receive a `job_id` in the response
-2. Use the **Job > Get Status** operation to check processing status
-3. Use the **Job > Get Result** operation to get the final download URLs
+1. Create graphic/carousel with `executionMode: "async"`
+2. You'll receive a `job_id` in the response
+3. Use the **Job > Get Status** operation to check processing status
+4. Use the **Job > Get Result** operation to get the final download URLs
+
+**Example Asynchronous Workflow:**
+```
+Trigger → Contentdrips (async) → Wait (30s) → Job Status → Job Result
+```
+
+## Workflow Examples
+
+### Simple Content Generation (Synchronous)
+```
+Schedule Trigger → Contentdrips (sync) → Slack/Email Notification
+```
+
+### Parallel Content Generation (Asynchronous)
+```
+Trigger → Split in Batches → Contentdrips (async) → Collect Job IDs → Poll All Jobs → Combine Results
+```
+
+### Dynamic Social Media Automation
+```
+RSS Feed → Transform Data → Contentdrips (sync) → Multiple Social Platforms
+```
+
+### Advanced Campaign Generator (Asynchronous)
+```
+Google Sheets → Process Data → Multiple Contentdrips (async) → Monitor Jobs → Cloud Storage
+```
 
 ## Compatibility
 
 - Minimum n8n version: 0.198.0
 - Tested with n8n version: 1.0.0+
-
-## Usage Examples
-
-### Social Media Automation
-Create a workflow that:
-1. Triggers on a schedule
-2. Fetches content from a CMS or spreadsheet
-3. Uses Contentdrips to generate social media graphics
-4. Posts to social platforms automatically
-
-### Marketing Campaign Generator
-Build a workflow that:
-1. Reads campaign data from Google Sheets
-2. Generates branded graphics for each campaign
-3. Stores results in cloud storage
-4. Sends notification emails with download links
-
-### Dynamic Workflow Examples
-
-#### Example 1: Variable Slide Count from Spreadsheet
-```
-Google Sheets → Read Data → Code Node (Transform) → Contentdrips → Save Results
-```
-
-**Code Node example** to transform spreadsheet data:
-```javascript
-// Input: Array of tips from spreadsheet
-const tips = $input.all()[0].json.tips;
-
-// Transform to Contentdrips format
-const slides = tips.map((tip, index) => ({
-  heading: tip.title,
-  description: tip.description,
-  image: tip.image_url || `https://example.com/slide${index + 1}.jpg`
-}));
-
-return [{
-  json: {
-    slides: { slide: slides }
-  }
-}];
-```
-
-#### Example 2: AI-Generated Content with Variable Length
-```
-OpenAI → Generate Tips → Code Node → Contentdrips → Post to Social
-```
-
-The AI might generate 5 tips one day and 12 tips another day - the Contentdrips node handles both scenarios seamlessly.
-
-#### Example 3: RSS Feed to Carousel
-```
-RSS Feed → Filter Items → Transform → Contentdrips → Cloud Storage
-```
-
-Number of slides depends on RSS feed items - could be 3 today, 10 tomorrow.
+- Node.js: 18.18.0+
 
 ## Troubleshooting
 
@@ -269,16 +286,33 @@ Number of slides depends on RSS feed items - could be 3 today, 10 tomorrow.
 - Verify that labeled elements match your content updates
 - Check that required fields are provided
 
-**Job Processing**
+**Job Processing (Synchronous Mode)**
 - Jobs typically take 2-5 minutes to process
-- Use the Job Status operation to monitor progress
+- Adjust polling interval and max wait time based on your needs
+- Failed jobs will include detailed error information
+
+**Job Processing (Asynchronous Mode)**
+- Use Job Status operation to monitor progress
 - Failed jobs will include error details in the response
+- Jobs can be checked at any time using the job ID
+
+**Timeout Issues**
+- Increase maximum wait time for complex templates
+- Consider using asynchronous mode for very long jobs
+- Use longer polling intervals to reduce API load
+
+### Performance Tips
+
+- **Synchronous Mode**: Use for simple, single-content generation
+- **Asynchronous Mode**: Use for batch processing or when integrating with other long-running operations
+- **Polling Settings**: Start with 5-second intervals, adjust based on typical job completion times
+- **Parallel Processing**: Use asynchronous mode with multiple nodes for faster batch processing
 
 ### Getting Help
 
 - Check the [Contentdrips API documentation](https://app.contentdrips.com/api-management)
 - Visit the [n8n community forum](https://community.n8n.io)
-- Report bugs on the [GitHub repository](https://github.com/YOUR_USERNAME/n8n-nodes-contentdrips/issues)
+- Report bugs on the [GitHub repository](https://github.com/cho-media/n8n-nodes-contentdrips-api/issues)
 
 ## Resources
 
@@ -288,6 +322,17 @@ Number of slides depends on RSS feed items - could be 3 today, 10 tomorrow.
 - [n8n Community Nodes](https://docs.n8n.io/integrations/community-nodes/)
 
 ## Version History
+
+### 1.2.0
+- **NEW**: Synchronous execution mode (default) - automatically waits for job completion
+- **NEW**: Asynchronous execution mode - returns job ID immediately for manual management
+- **NEW**: Configurable polling intervals and timeout settings
+- **IMPROVED**: Enhanced error handling with detailed job failure information
+- **IMPROVED**: Better response data including processing time and status check counts
+- **FIXED**: SVG icon loading issues
+
+### 1.1.3
+- Bug fixes and stability improvements
 
 ### 1.0.0
 - Initial release
