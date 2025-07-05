@@ -9,6 +9,17 @@ import type {
 import { NodeConnectionType } from 'n8n-workflow';
 import { contentdripsApiRequest, validateRequiredFields, cleanEmptyFields } from './GenericFunctions';
 
+// Use Node.js built-in timer for proper TypeScript support
+const wait = (ms: number): Promise<void> => {
+	return new Promise((resolve) => {
+		const timer = global.setTimeout(resolve, ms);
+		// Properly handle timer cleanup
+		if (timer && typeof timer === 'object' && 'unref' in timer) {
+			timer.unref();
+		}
+	});
+};
+
 export class Contentdrips implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Contentdrips',
@@ -573,7 +584,7 @@ export class Contentdrips implements INodeType {
 				const resource = this.getNodeParameter('resource', i) as string;
 				const operation = this.getNodeParameter('operation', i) as string;
 
-				let responseData: any;
+				let responseData: IDataObject = {};
 
 				if (resource === 'graphic' && operation === 'create') {
 					responseData = await createGraphic.call(this, i);
@@ -690,9 +701,15 @@ async function createCarousel(this: IExecuteFunctions, itemIndex: number): Promi
 		const description = this.getNodeParameter('introSlideDescription', itemIndex, '') as string;
 		const image = this.getNodeParameter('introSlideImage', itemIndex, '') as string;
 		
-		if (heading) introSlide.heading = heading;
-		if (description) introSlide.description = description;
-		if (image) introSlide.image = image;
+		if (heading) {
+			introSlide.heading = heading;
+		}
+		if (description) {
+			introSlide.description = description;
+		}
+		if (image) {
+			introSlide.image = image;
+		}
 		
 		if (Object.keys(introSlide).length > 0) {
 			carousel.intro_slide = introSlide;
@@ -708,7 +725,7 @@ async function createCarousel(this: IExecuteFunctions, itemIndex: number): Promi
 			carousel.slides = contentSlides.slide;
 		}
 	} else {
-		const contentSlidesJson = this.getNodeParameter('contentSlidesJson', itemIndex, []) as any[];
+		const contentSlidesJson = this.getNodeParameter('contentSlidesJson', itemIndex, []) as IDataObject[];
 		if (Array.isArray(contentSlidesJson) && contentSlidesJson.length > 0) {
 			carousel.slides = contentSlidesJson;
 		}
@@ -722,9 +739,15 @@ async function createCarousel(this: IExecuteFunctions, itemIndex: number): Promi
 		const description = this.getNodeParameter('endingSlideDescription', itemIndex, '') as string;
 		const image = this.getNodeParameter('endingSlideImage', itemIndex, '') as string;
 		
-		if (heading) endingSlide.heading = heading;
-		if (description) endingSlide.description = description;
-		if (image) endingSlide.image = image;
+		if (heading) {
+			endingSlide.heading = heading;
+		}
+		if (description) {
+			endingSlide.description = description;
+		}
+		if (image) {
+			endingSlide.image = image;
+		}
 		
 		if (Object.keys(endingSlide).length > 0) {
 			carousel.ending_slide = endingSlide;
@@ -782,14 +805,14 @@ async function waitForJobCompletion(this: IExecuteFunctions, jobId: string, item
 			}
 			
 			// Job is still processing, wait before next check
-			await new Promise(resolve => setTimeout(resolve, pollingIntervalMs));
+			await wait(pollingIntervalMs);
 			
 		} catch (error) {
 			if (error instanceof Error && error.message.includes('Job failed:')) {
 				throw error;
 			}
 			// For other errors (network issues, etc.), continue polling
-			await new Promise(resolve => setTimeout(resolve, pollingIntervalMs));
+			await wait(pollingIntervalMs);
 		}
 	}
 	
