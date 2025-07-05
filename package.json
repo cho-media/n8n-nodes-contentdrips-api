@@ -13,25 +13,24 @@
     "design"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/cho-media/n8n-nodes-contentdrips-api",
+  "homepage": "https://github.com/YOUR_USERNAME/n8n-nodes-contentdrips-api",
   "author": {
-    "name": "n8n contributor",
-    "email": "contributor@example.com"
+    "name": "YOUR_NAME",
+    "email": "YOUR_EMAIL"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/cho-media/n8n-nodes-contentdrips-api.git"
+    "url": "https://github.com/YOUR_USERNAME/n8n-nodes-contentdrips-api.git"
   },
   "bugs": {
-    "url": "https://github.com/cho-media/n8n-nodes-contentdrips-api/issues"
+    "url": "https://github.com/YOUR_USERNAME/n8n-nodes-contentdrips-api/issues"
   },
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=20.15"
   },
   "main": "index.js",
   "scripts": {
-    "build": "tsc && npm run copy-icons",
-    "copy-icons": "copyfiles -u 1 \"nodes/**/*.svg\" dist/",
+    "build": "tsc && gulp build:icons",
     "dev": "tsc --watch",
     "format": "prettier nodes credentials --write",
     "lint": "eslint nodes credentials package.json",
@@ -52,10 +51,11 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.30.0",
+    "@types/node": "^22.13.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
-    "copyfiles": "^2.4.1",
     "eslint": "^9.30.0",
+    "gulp": "^4.0.2",
     "prettier": "^3.3.0",
     "typescript": "^5.6.0"
   },
